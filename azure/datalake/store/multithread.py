@@ -106,12 +106,12 @@ class ADLDownloader(object):
     def __init__(self, adlfs, rpath, lpath, nthreads=None, chunksize=2**28,
                  buffersize=2**22, blocksize=2**22, client=None, run=True,
                  overwrite=False, verbose=False, progress_callback=None):
-        
+
         # validate that the src exists and the current user has access to it
         # this only validates access to the top level folder. If there are files
         # or folders underneath it that the user does not have access to the download
         # will fail on those files. We clean the path in case there are wildcards.
-        # In this case, we will always invalidate the cache for this check to 
+        # In this case, we will always invalidate the cache for this check to
         # do our best to ensure that the path exists as close to run time of the transfer as possible.
         # Due to the nature of a distributed filesystem, the path could be deleted later during execution,
         # at which point the transfer's behavior may be non-deterministic, but it will indicate an error.
@@ -138,7 +138,7 @@ class ADLDownloader(object):
         existing_files = self._setup()
         if existing_files:
             raise FileExistsError('Overwrite was not specified and the following files exist, blocking the transfer operation. Please specify overwrite to overwrite these files during transfer: {}'.format(','.join(existing_files)))
-        
+
         if run:
             self.run()
 
@@ -196,7 +196,7 @@ class ADLDownloader(object):
             rfiles = self.client._adlfs.glob(self.rpath, details=True, invalidate_cache=True)
         if len(rfiles) > 1:
             local_rel_rpath = str(AzureDLPath(self.rpath).globless_prefix)
-            file_pairs = [(os.path.join(self.lpath, os.path.relpath(f['name'] +'.inprogress', local_rel_rpath)), f)
+            file_pairs = [(os.path.join(self.lpath, f['name'] + '.inprogress'), f)
                           for f in rfiles]
         elif len(rfiles) == 1:
             if os.path.exists(self.lpath) and os.path.isdir(self.lpath):
@@ -213,14 +213,14 @@ class ADLDownloader(object):
 
         existing_files = []
         for lfile, rfile in file_pairs:
-            # only interested in the final destination file name for existence, 
+            # only interested in the final destination file name for existence,
             # not the initial inprogress target
             destination_file = lfile.replace('.inprogress', '')
             if not self._overwrite and os.path.exists(destination_file):
                 existing_files.append(destination_file)
             else:
                 self.client.submit(rfile['name'], lfile, rfile['length'])
-        
+
         return existing_files
     def run(self, nthreads=None, monitor=True):
         """ Populate transfer queue and execute downloads
@@ -285,7 +285,7 @@ def get_chunk(adlfs, src, dst, offset, size, buffersize, blocksize,
                             if nwritten:
                                 nbytes += nwritten
             logger.debug('Downloaded %s bytes to %s, byte offset %s', nbytes, dst, offset)
-            
+
             # There are certain cases where we will be throttled and recieve less than the expected amount of data.
             # In these cases, instead of failing right away, instead indicate a retry is occuring and update offset and
             # size to attempt another read to get the rest of the data. We will only do this if the amount of bytes read
@@ -386,7 +386,7 @@ class ADLUploader(object):
         self.lpath = lpath
         self._overwrite = overwrite
         existing_files = self._setup()
-        
+
         if existing_files:
             raise FileExistsError('Overwrite was not specified and the following files exist, blocking the transfer operation. Please specify overwrite to overwrite these files during transfer: {}'.format(','.join(existing_files)))
 
@@ -450,7 +450,7 @@ class ADLUploader(object):
                 lfiles = [self.lpath]
         else:
             lfiles = glob.glob(self.lpath)
-        
+
         if len(lfiles) > 1:
             local_rel_lpath = str(AzureDLPath(self.lpath).globless_prefix)
             file_pairs = [(f, self.rpath / AzureDLPath(f).relative_to(local_rel_lpath)) for f in lfiles]
@@ -527,7 +527,7 @@ def put_chunk(adlfs, src, dst, offset, size, buffersize, blocksize, delimiter=No
                             return nbytes, None
                         data = read_block(fin, o, miniblock, delimiter)
                         nbytes += fout.write(data)
-                
+
     except Exception as e:
         exception = repr(e)
         logger.error('Upload failed %s; %s', src, exception)
