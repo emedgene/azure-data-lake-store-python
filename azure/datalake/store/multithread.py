@@ -194,16 +194,10 @@ class ADLDownloader(object):
             rfiles = self.client._adlfs.walk(self.rpath, details=True, invalidate_cache=True)
         else:
             rfiles = self.client._adlfs.glob(self.rpath, details=True, invalidate_cache=True)
-        if len(rfiles) > 1:
+        if len(rfiles) >= 1:
             local_rel_rpath = str(AzureDLPath(self.rpath).globless_prefix)
-            file_pairs = [(os.path.join(self.lpath, f['name'] + '.inprogress'), f)
-                          for f in rfiles]
-        elif len(rfiles) == 1:
-            if os.path.exists(self.lpath) and os.path.isdir(self.lpath):
-                file_pairs = [(os.path.join(self.lpath, os.path.basename(rfiles[0]['name'] + '.inprogress')),
-                               rfiles[0])]
-            else:
-                file_pairs = [(self.lpath, rfiles[0])]
+            file_pairs = [(os.path.join(self.lpath, os.path.basename(f['name']) + '.inprogress'), f) for f in rfiles]
+
         else:
             raise ValueError('No files to download')
 
